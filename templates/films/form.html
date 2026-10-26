@@ -5,7 +5,7 @@
   <h1>{{ 'Изменить фильм' if film_id else 'Добавить фильм' }}</h1>
   <p class="muted">Обязательное поле — только название. Чем больше данных вы укажете, тем точнее система подберёт фильм зрителям.</p>
 
-  <form method="post" novalidate>
+  <form method="post" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
     <label class="field">Название *
@@ -52,7 +52,11 @@
     <label class="field">Ссылка на постер (необязательно)
       <input type="url" name="poster_url" value="{{ form.get('poster_url', '') }}" maxlength="500" placeholder="https://...">
     </label>
-
+<label for="video">Видеофайл (mp4, до 100 МБ)</label>
+<input type="file" id="video" name="video" accept="video/mp4">
+{% if has_video %}
+  <p>Видео уже загружено. Новый файл заменит старый.</p>
+{% endif %}
     <div class="hero-actions">
       <button class="btn btn-primary" type="submit">{{ 'Сохранить изменения' if film_id else 'Добавить фильм' }}</button>
       <a class="btn btn-ghost" href="{{ url_for('films.my_films') }}">Отмена</a>
