@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Ошибка {{ code }} · КиноРекоменд{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Ошибка {{ code }}</p>
+  <h1>{{ text }}</h1>
+  <div class="hero-actions"><a class="btn btn-primary" href="{{ url_for('index') }}">На главную</a></div>
+</section>
+{% endblock %}

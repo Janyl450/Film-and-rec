@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Вход · КиноРекоменд{% endblock %}
+{% block content %}
+<section class="auth card">
+  <h1>Вход</h1>
+  <p class="muted">Рады видеть вас снова.</p>
+  <form method="post" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <label class="field">Электронная почта
+      <input type="email" name="email" value="{{ email }}" required autocomplete="email" placeholder="you@example.com">
+    </label>
+    <label class="field">Пароль
+      <input type="password" name="password" required autocomplete="current-password">
+    </label>
+    <button class="btn btn-primary btn-block" type="submit">Войти</button>
+  </form>
+  <p class="switch">Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+</section>
+{% endblock %}

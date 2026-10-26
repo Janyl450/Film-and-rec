@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Веб-система персонального подбора фильмов</p>
+  <h1>Фильмы, которые подходят <em>именно вам</em></h1>
+  <p class="lead">Укажите любимые жанры и годы выпуска — система подберёт кино по вашим вкусам и покажет честный рейтинг без накруток.</p>
+  <div class="hero-actions">
+    {% if current_user %}
+      <a class="btn btn-primary btn-lg" href="{{ url_for('profile') }}">Мой профиль</a>
+    {% else %}
+      <a class="btn btn-primary btn-lg" href="{{ url_for('register') }}">Создать аккаунт</a>
+      <a class="btn btn-ghost btn-lg" href="{{ url_for('login') }}">У меня уже есть аккаунт</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="features">
+  <article class="feature">
+    <h3>Профиль предпочтений</h3>
+    <p>Любимые и нежелательные жанры, годы выпуска, возрастные ограничения.</p>
+    <span class="tag tag-ok">Готово</span>
+  </article>
+  <article class="feature">
+    <h3>Персональный подбор</h3>
+    <p>Процент совпадения фильма с вашими вкусами и пояснение, почему он подходит.</p>
+    <span class="tag">В разработке</span>
+  </article>
+  <article class="feature">
+    <h3>Честный рейтинг</h3>
+    <p>Взвешенный рейтинг и проверка отзывов на накрутки.</p>
+    <span class="tag">В разработке</span>
+  </article>
+</section>
+{% endblock %}

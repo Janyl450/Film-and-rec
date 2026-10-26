@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Регистрация · КиноРекоменд{% endblock %}
+{% block content %}
+<section class="auth card">
+  <h1>Регистрация</h1>
+  <p class="muted">Создайте аккаунт, чтобы получать рекомендации.</p>
+  <form method="post" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <label class="field">Имя
+      <input type="text" name="name" value="{{ form.get('name', '') }}" autocomplete="name" placeholder="Как к вам обращаться">
+    </label>
+    <label class="field">Электронная почта
+      <input type="email" name="email" value="{{ form.get('email', '') }}" required autocomplete="email" placeholder="you@example.com">
+    </label>
+    <label class="field">Пароль
+      <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Не менее 8 символов">
+    </label>
+    <label class="field">Повторите пароль
+      <input type="password" name="password2" required minlength="8" autocomplete="new-password">
+    </label>
+    <fieldset class="field roles">
+      <legend>Я хочу зарегистрироваться как</legend>
+      <label class="radio"><input type="radio" name="role" value="viewer" {{ 'checked' if form.get('role', 'viewer') == 'viewer' }}><span><b>Зритель</b><small>ищу фильмы и пишу отзывы</small></span></label>
+      <label class="radio"><input type="radio" name="role" value="author" {{ 'checked' if form.get('role') == 'author' }}><span><b>Автор</b><small>добавляю фильмы и подборки</small></span></label>
+    </fieldset>
+    <button class="btn btn-primary btn-block" type="submit">Зарегистрироваться</button>
+  </form>
+  <p class="switch">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+</section>
+{% endblock %}
