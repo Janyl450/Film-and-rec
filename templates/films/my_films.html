@@ -23,6 +23,9 @@
       {% if f.trailer_url %}
         <a class="btn btn-ghost" href="{{ f.trailer_url }}" target="_blank" rel="noopener noreferrer">Трейлер</a>
       {% endif %}
+      {% if f.has_video %}
+  <a href="{{ url_for('films.watch_film', film_id=f.id) }}">Смотреть</a>
+{% endif %}
     </div>
   </article>
   {% endfor %}
