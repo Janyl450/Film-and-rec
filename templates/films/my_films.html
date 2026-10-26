@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Мои фильмы · КиноРекоменд{% endblock %}
+{% block content %}
+<h1>Мои фильмы</h1>
+<p class="muted">Здесь все карточки, которые создали вы. Нажмите «Изменить», чтобы исправить данные.</p>
+<p><a class="btn btn-primary" href="{{ url_for('films.add_film') }}">Добавить фильм</a></p>
+
+{% if films %}
+<div class="grid">
+  {% for f in films %}
+  <article class="card">
+    <h2>{{ f.title }}</h2>
+    {% if f.meta %}<p class="muted">{{ f.meta }}</p>{% endif %}
+    {% if f.genre_list %}
+      <div class="chips" style="margin-bottom: 12px">
+        {% for g in f.genre_list %}<span class="tag">{{ g }}</span>{% endfor %}
+      </div>
+    {% endif %}
+    {% if f.director %}<p class="muted">Режиссёр: {{ f.director }}</p>{% endif %}
+    {% if f.description %}<p class="muted">{{ f.description|truncate(140) }}</p>{% endif %}
+    <div class="chips">
+      <a class="btn btn-ghost" href="{{ url_for('films.edit_film', film_id=f.id) }}">Изменить</a>
+      {% if f.trailer_url %}
+        <a class="btn btn-ghost" href="{{ f.trailer_url }}" target="_blank" rel="noopener noreferrer">Трейлер</a>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card">
+  <h2>Пока здесь пусто</h2>
+  <p class="muted">Вы ещё не добавили ни одного фильма. Нажмите «Добавить фильм» и заполните карточку.</p>
+</section>
+{% endif %}
+{% endblock %}

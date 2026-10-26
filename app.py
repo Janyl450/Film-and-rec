@@ -11,11 +11,13 @@ from flask import (Flask, abort, flash, redirect, render_template, request,
                    session, url_for)
 
 from models import AuthAndPreferencesModule as Auth, init_user_storage
+from films import films_bp
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-change-me")
+app.register_blueprint(films_bp)
 
 GENRES = [
     "Драма", "Комедия", "Триллер", "Боевик", "Фантастика", "Фэнтези",

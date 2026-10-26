@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Изменить фильм' if film_id else 'Добавить фильм' }} · КиноРекоменд{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>{{ 'Изменить фильм' if film_id else 'Добавить фильм' }}</h1>
+  <p class="muted">Обязательное поле — только название. Чем больше данных вы укажете, тем точнее система подберёт фильм зрителям.</p>
+
+  <form method="post" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+    <label class="field">Название *
+      <input type="text" name="title" value="{{ form.get('title', '') }}" required maxlength="255" placeholder="Например: Начало">
+    </label>
+
+    <fieldset class="chips-group">
+      <legend>Жанры</legend>
+      <div class="chips chips-like">
+        {% for g in genres %}
+          <label class="chip"><input type="checkbox" name="genres" value="{{ g }}" {{ 'checked' if g in selected }}><span>{{ g }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="row">
+      <label class="field">Год выпуска
+        <input type="number" name="year" min="1888" max="2100" value="{{ form.get('year', '') }}" placeholder="2010">
+      </label>
+      <label class="field">Длительность (мин)
+        <input type="number" name="duration" min="1" max="10000" value="{{ form.get('duration', '') }}" placeholder="120">
+      </label>
+      <label class="field">Страна
+        <input type="text" name="country" value="{{ form.get('country', '') }}" maxlength="255" placeholder="США">
+      </label>
+    </div>
+
+    <label class="field">Режиссёр
+      <input type="text" name="director" value="{{ form.get('director', '') }}" maxlength="255">
+    </label>
+
+    <label class="field">Актёрский состав
+      <input type="text" name="actors" value="{{ form.get('actors', '') }}" maxlength="2000" placeholder="Через запятую">
+    </label>
+
+    <label class="field">Описание
+      <textarea name="description" rows="5" maxlength="5000" style="display:block;width:100%;margin-top:6px;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--bg-2);color:var(--text);font:inherit;font-size:1rem;resize:vertical">{{ form.get('description', '') }}</textarea>
+    </label>
+
+    <label class="field">Ссылка на трейлер
+      <input type="url" name="trailer_url" value="{{ form.get('trailer_url', '') }}" maxlength="500" placeholder="https://www.youtube.com/...">
+    </label>
+
+    <label class="field">Ссылка на постер (необязательно)
+      <input type="url" name="poster_url" value="{{ form.get('poster_url', '') }}" maxlength="500" placeholder="https://...">
+    </label>
+
+    <div class="hero-actions">
+      <button class="btn btn-primary" type="submit">{{ 'Сохранить изменения' if film_id else 'Добавить фильм' }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('films.my_films') }}">Отмена</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
