@@ -12,6 +12,10 @@
       <a class="logo" href="{{ url_for('index') }}"><span class="logo-mark">▶</span> КиноРекоменд</a>
       <nav class="nav">
         {% if current_user %}
+          {% if current_user.role == 'author' %}
+            <a href="{{ url_for('films.my_films') }}">Мои фильмы</a>
+            <a href="{{ url_for('films.add_film') }}">Добавить фильм</a>
+          {% endif %}
           <a href="{{ url_for('profile') }}" class="nav-user">
             <span class="avatar">{{ (current_user.name or current_user.email)[0]|upper }}</span>
             <span class="nav-name">{{ current_user.name or current_user.email }}</span>
