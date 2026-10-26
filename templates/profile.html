@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Профиль · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="profile-head">
+  <span class="avatar avatar-lg">{{ (p.name or p.email)[0]|upper }}</span>
+  <div>
+    <h1>{{ p.name or 'Без имени' }}</h1>
+    <p class="muted">{{ p.email }} · <span class="tag tag-role">{{ ROLE_TITLES.get(p.role, p.role) }}</span></p>
+  </div>
+</div>
+
+<div class="grid">
+  <section class="card" id="info">
+    <h2>Личные данные</h2>
+    <form method="post">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="info">
+      <label class="field">Имя
+        <input type="text" name="name" value="{{ p.name or '' }}">
+      </label>
+      <label class="field">Контактные данные
+        <input type="text" name="contact" value="{{ p.contact or '' }}" placeholder="Телефон или Telegram">
+      </label>
+      <button class="btn btn-primary" type="submit">Сохранить</button>
+    </form>
+  </section>
+
+  <section class="card" id="password">
+    <h2>Смена пароля</h2>
+    <form method="post">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="password">
+      <label class="field">Текущий пароль
+        <input type="password" name="old_password" required autocomplete="current-password">
+      </label>
+      <label class="field">Новый пароль
+        <input type="password" name="new_password" required minlength="8" autocomplete="new-password" placeholder="Не менее 8 символов">
+      </label>
+      <label class="field">Повторите новый пароль
+        <input type="password" name="new_password2" required minlength="8" autocomplete="new-password">
+      </label>
+      <button class="btn btn-ghost" type="submit">Изменить пароль</button>
+    </form>
+  </section>
+</div>
+
+<section class="card" id="prefs">
+  <h2>Кинопредпочтения</h2>
+  <p class="muted">По ним система будет подбирать фильмы и считать процент совпадения.</p>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="action" value="prefs">
+
+    <fieldset class="chips-group">
+      <legend>Любимые жанры</legend>
+      <div class="chips chips-like">
+        {% for g in genres %}
+          <label class="chip"><input type="checkbox" name="favorite" value="{{ g }}" {{ 'checked' if g in favorite }}><span>{{ g }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset class="chips-group">
+      <legend>Нежелательные жанры</legend>
+      <div class="chips chips-dislike">
+        {% for g in genres %}
+          <label class="chip"><input type="checkbox" name="disliked" value="{{ g }}" {{ 'checked' if g in disliked }}><span>{{ g }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="row">
+      <label class="field">Годы выпуска: от
+        <input type="number" name="year_from" min="1888" max="2100" value="{{ p.year_from or '' }}" placeholder="1990">
+      </label>
+      <label class="field">до
+        <input type="number" name="year_to" min="1888" max="2100" value="{{ p.year_to or '' }}" placeholder="2025">
+      </label>
+      <label class="field">Возрастное ограничение (не выше)
+        <select name="restrictions">
+          {% for a in age_limits %}
+            <option value="{{ a }}" {{ 'selected' if (p.restrictions or '') == a }}>{{ a or 'Без ограничений' }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <button class="btn btn-primary" type="submit">Сохранить предпочтения</button>
+  </form>
+</section>
+{% endblock %}
