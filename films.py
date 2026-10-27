@@ -5,10 +5,11 @@
   /films/new             — форма «Добавить фильм»
   /films/<id>/edit       — изменение своей карточки
 """
+import os
 from functools import wraps
 
-from flask import (Blueprint, flash, redirect, render_template, request,
-                   session, url_for)
+from flask import (Blueprint, current_app, flash, redirect, render_template,
+                   request, session, url_for)
 
 from database import connect_to_database
 
@@ -24,6 +25,7 @@ GENRES = [
 
 MIN_YEAR, MAX_YEAR = 1888, 2100
 MAX_DURATION = 10000  # минут, защита от случайных опечаток
+MAX_VIDEO_BYTES = 500 * 1024 * 1024  # видео не больше 500 МБ
 
 FILM_FIELDS = (
     "id, title, genres, year, country, director, actors, duration, "
@@ -239,6 +241,61 @@ def validate_film_form(form):
     return data, errors
 
 
+# ---------- видеофайл фильма ----------
+# Видео лежит в папке static/videos/<номер фильма>.mp4.
+# В таблицу films ничего не добавляется: страница сама проверяет, есть ли файл.
+def _video_paths(film_id):
+    folder = os.path.join(current_app.static_folder, "videos")
+    return folder, os.path.join(folder, f"{film_id}.mp4")
+
+
+def film_has_video(film_id):
+    return os.path.isfile(_video_paths(film_id)[1])
+
+
+def check_video(file):
+    """Проверяет загруженный файл. Возвращает текст ошибки или None."""
+    if not file or not file.filename:
+        return None  # видео не выбрано — это нормально
+    if not file.filename.lower().endswith(".mp4"):
+        return "Видео должно быть в формате MP4. Выберите файл с расширением .mp4."
+    head = file.stream.read(12)
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if head[4:8] != b"ftyp":
+        return "Этот файл не похож на видео MP4. Выберите другой файл."
+    if size > MAX_VIDEO_BYTES:
+        return "Видео слишком большое: не больше 500 МБ. Возьмите короткий ролик."
+    return None
+
+
+def _store_video(film_id, file):
+    """Сохраняет видео, если оно выбрано. Возвращает False при ошибке записи."""
+    if not file or not file.filename:
+        return True
+    try:
+        folder, path = _video_paths(film_id)
+        os.makedirs(folder, exist_ok=True)
+        file.save(path)
+        return True
+    except OSError as error:
+        print("Ошибка сохранения видео:", error)
+        return False
+
+
+@films_bp.record_once
+def _set_upload_limit(state):
+    # запас на остальные поля формы
+    state.app.config["MAX_CONTENT_LENGTH"] = MAX_VIDEO_BYTES + 5 * 1024 * 1024
+
+
+@films_bp.app_errorhandler(413)
+def file_too_large(_):
+    return render_template("error.html", code=413,
+                           text="Файл слишком большой. Загрузите видео не больше 500 МБ."), 413
+
+
 # ---------- права доступа ----------
 def author_required(view):
     """Пускает только вошедшего пользователя с ролью «автор»."""
@@ -281,7 +338,20 @@ def _film_to_form(film):
 
 def _render_form(form, selected, film_id=None):
     return render_template("films/form.html", form=form, selected=selected,
-                           genres=GENRES, film_id=film_id)
+                           genres=GENRES, film_id=film_id,
+                           has_video=bool(film_id) and film_has_video(film_id))
+
+
+def _load_own_film(film_id):
+    """Возвращает (фильм, None) или (None, редирект с сообщением)."""
+    film = get_film(film_id)
+    if film is None:
+        flash("Такой карточки нет. Выберите фильм из списка.", "error")
+        return None, redirect(url_for("films.my_films"))
+    if film["author_id"] != session["user"]["id"]:
+        flash("Эту карточку создал другой автор. Выберите свой фильм из списка.", "error")
+        return None, redirect(url_for("films.my_films"))
+    return film, None
 
 
 # Таблица films создаётся при первом открытии любой страницы сайта
@@ -311,11 +381,29 @@ def my_films():
     return render_template("films/my_films.html", films=films)
 
 
+@films_bp.route("/films/<int:film_id>")
+@author_required
+def view_film(film_id):
+    film, redirect_response = _load_own_film(film_id)
+    if redirect_response:
+        return redirect_response
+    film["genre_list"] = _split_genres(film["genres"])
+    film["meta"] = _film_meta(film)
+    video_url = None
+    if film_has_video(film_id):
+        video_url = url_for("static", filename=f"videos/{film_id}.mp4")
+    return render_template("films/view.html", film=film, video_url=video_url)
+
+
 @films_bp.route("/films/new", methods=["GET", "POST"])
 @author_required
 def add_film():
     if request.method == "POST":
         data, errors = validate_film_form(request.form)
+        video = request.files.get("video")
+        video_error = check_video(video)
+        if video_error:
+            errors.append(video_error)
         if errors:
             for message in errors:
                 flash(message, "error")
@@ -323,6 +411,9 @@ def add_film():
             film_id = create_film(session["user"]["id"], data)
             if film_id:
                 flash(f"Фильм «{data['title']}» добавлен.", "success")
+                if not _store_video(film_id, video):
+                    flash("Карточка сохранена, но видео загрузить не удалось. "
+                          "Откройте «Изменить» и попробуйте ещё раз.", "error")
                 return redirect(url_for("films.my_films"))
             flash("Не удалось сохранить фильм. Проверьте, что PostgreSQL запущен, "
                   "и попробуйте ещё раз.", "error")
@@ -333,22 +424,24 @@ def add_film():
 @films_bp.route("/films/<int:film_id>/edit", methods=["GET", "POST"])
 @author_required
 def edit_film(film_id):
-    film = get_film(film_id)
-    if film is None:
-        flash("Такой карточки нет. Выберите фильм из списка.", "error")
-        return redirect(url_for("films.my_films"))
-    if film["author_id"] != session["user"]["id"]:
-        flash("Эту карточку создал другой автор, изменять её нельзя. "
-              "Выберите свой фильм из списка.", "error")
-        return redirect(url_for("films.my_films"))
+    film, redirect_response = _load_own_film(film_id)
+    if redirect_response:
+        return redirect_response
 
     if request.method == "POST":
         data, errors = validate_film_form(request.form)
+        video = request.files.get("video")
+        video_error = check_video(video)
+        if video_error:
+            errors.append(video_error)
         if errors:
             for message in errors:
                 flash(message, "error")
         elif update_film(film_id, session["user"]["id"], data):
             flash(f"Изменения в фильме «{data['title']}» сохранены.", "success")
+            if not _store_video(film_id, video):
+                flash("Данные сохранены, но видео загрузить не удалось. "
+                      "Попробуйте ещё раз.", "error")
             return redirect(url_for("films.my_films"))
         else:
             flash("Не удалось сохранить изменения. Попробуйте ещё раз.", "error")

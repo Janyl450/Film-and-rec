@@ -19,13 +19,11 @@
     {% if f.director %}<p class="muted">Режиссёр: {{ f.director }}</p>{% endif %}
     {% if f.description %}<p class="muted">{{ f.description|truncate(140) }}</p>{% endif %}
     <div class="chips">
+      <a class="btn btn-primary" href="{{ url_for('films.view_film', film_id=f.id) }}">Смотреть</a>
       <a class="btn btn-ghost" href="{{ url_for('films.edit_film', film_id=f.id) }}">Изменить</a>
       {% if f.trailer_url %}
         <a class="btn btn-ghost" href="{{ f.trailer_url }}" target="_blank" rel="noopener noreferrer">Трейлер</a>
       {% endif %}
-      {% if f.has_video %}
-  <a href="{{ url_for('films.watch_film', film_id=f.id) }}">Смотреть</a>
-{% endif %}
     </div>
   </article>
   {% endfor %}

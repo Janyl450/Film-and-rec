@@ -4,12 +4,13 @@
 Нужно, чтобы PostgreSQL был запущен, а в .env был верный пароль.
 Скрипт создаёт тестового автора и фильм, а в конце удаляет их.
 """
+import io
 import uuid
 
-from werkzeug.datastructures import MultiDict
+from werkzeug.datastructures import FileStorage, MultiDict
 
 from database import connect_to_database
-from films import (create_film, get_film, init_films_storage,
+from films import (check_video, create_film, get_film, init_films_storage,
                    list_films_by_author, update_film, validate_film_form)
 from models import AuthAndPreferencesModule as Auth, init_user_storage
 
@@ -50,6 +51,15 @@ def main():
         _, errors = validate_film_form(bad)
         assert len(errors) == 4, errors
         print("OK: проверка формы работает")
+
+        # 1а. Проверка видеофайла
+        mp4 = FileStorage(io.BytesIO(b"\x00\x00\x00\x18ftypmp42" + b"0" * 100), filename="a.mp4")
+        assert check_video(mp4) is None
+        fake = FileStorage(io.BytesIO(b"this is not a video, just text"), filename="a.mp4")
+        assert check_video(fake)
+        wrong = FileStorage(io.BytesIO(b"\x00\x00\x00\x18ftypmp42"), filename="a.avi")
+        assert check_video(wrong)
+        print("OK: проверка видеофайла работает")
 
         # 2. Создание и чтение
         film_id = create_film(author_id, data)
