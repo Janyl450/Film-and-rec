@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Пользователи · Админка{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Админка</h1></div>
+{% include "admin/_tabs.html" %}
+<form class="searchbar" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Поиск по почте или имени" aria-label="Поиск">
+  <button class="btn btn-primary" type="submit">Найти</button>
+</form>
+<div class="card table-wrap">
+  <table class="table">
+    <thead><tr><th>Пользователь</th><th>Роль</th><th>Статус</th><th>Создан</th><th></th></tr></thead>
+    <tbody>
+    {% for u in items %}
+      <tr>
+        <td><b>{{ u.name or '—' }}</b><br><span class="muted small">{{ u.email }}</span></td>
+        <td><span class="tag tag-role">{{ ROLE_TITLES.get(u.role, u.role) }}</span></td>
+        <td>{% if u.is_blocked %}<span class="tag tag-bad">Заблокирован</span>{% else %}<span class="tag tag-ok">Активен</span>{% endif %}</td>
+        <td class="small">{{ u.created_at|dt }}</td>
+        <td>
+          {% if u.role != 'admin' and u.id != me %}
+          <form method="post" action="{{ url_for('admin.toggle_block', user_id=u.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}"><input type="hidden" name="q" value="{{ q }}">
+            <button class="btn btn-ghost btn-sm {{ '' if u.is_blocked else 'btn-danger' }}" type="submit"
+              {% if not u.is_blocked %}onclick="return confirm('Заблокировать {{ u.email }}?')"{% endif %}>{{ 'Разблокировать' if u.is_blocked else 'Заблокировать' }}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">Никого не найдено.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_film_macros.html" import poster, genre_tags %}
+{% block title %}Скрытые фильмы · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Скрытые фильмы</h1>
+  <p class="muted">Эти фильмы вы отметили как «Не интересно», в рекомендациях они не показываются.</p>
+</div>
+{% if not films %}
+  <div class="card empty"><h2>Скрытых фильмов нет</h2><a class="btn btn-primary" href="{{ url_for('recommendations.index') }}">К рекомендациям</a></div>
+{% else %}
+  <div class="list">
+    {% for f in films %}
+    <article class="row-card">
+      {{ poster(f) }}
+      <div class="row-main">
+        <h3>{{ f.title }}</h3>
+        <p class="muted meta">{{ f.meta }}</p>
+        {{ genre_tags(f) }}
+        <div class="row-actions">
+          <form method="post" action="{{ url_for('recommendations.unhide', film_id=f.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button class="btn btn-primary btn-sm" type="submit">Вернуть в рекомендации</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <p class="list-foot"><a href="{{ url_for('recommendations.index') }}">← К рекомендациям</a></p>
+{% endif %}
+{% endblock %}

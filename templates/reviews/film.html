@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_film_macros.html" import poster, genre_tags, score_pills %}
+{% block title %}{{ film.title }} · отзывы · КиноРекоменд{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('reviews.index') }}">← Все фильмы</a></p>
+<section class="film-head card">
+  {{ poster(film, "poster-lg") }}
+  <div>
+    <h1>{{ film.title }}</h1>
+    <p class="muted meta">{{ film.meta }}{% if film.director %} · реж. {{ film.director }}{% endif %}</p>
+    {{ genre_tags(film) }}
+    {% if film.actors %}<p class="muted small">В ролях: {{ film.actors }}</p>{% endif %}
+    {% if film.description and not film.description.startswith('[демо]') %}<p>{{ film.description }}</p>{% endif %}
+  </div>
+</section>
+
+{% if video_url %}
+<section class="card"><h2>Видео</h2><video class="video" src="{{ video_url }}" controls preload="metadata"></video></section>
+{% endif %}
+
+<section class="card">
+  <h2>Оценки зрителей</h2>
+  {% if agg.n %}
+    <div class="agg">
+      <div class="agg-total"><b>{{ '%.1f'|format(agg.overall) }}</b><small>из 10 · отзывов: {{ agg.n }}</small></div>
+      <div class="agg-bars">
+        {% for label, val in [('Сюжет', agg.plot), ('Актёрская игра', agg.acting), ('Музыка и визуал', agg.visual)] %}
+          <div class="part"><span>{{ label }}</span><div class="meter meter-sm"><span style="width: {{ val * 10 }}%"></span></div><b>{{ '%.1f'|format(val) }}</b></div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <p class="muted">Опубликованных отзывов пока нет. Станьте первым!</p>
+  {% endif %}
+</section>
+
+<section class="card" id="form">
+  <h2>{{ 'Ваш отзыв' if mine else 'Оставить отзыв' }}
+    {% if mine %}<span class="tag {{ 'tag-ok' if mine.status == 'approved' else 'tag-warn' }}">{{ status_titles.get(mine.status, mine.status) }}</span>{% endif %}</h2>
+  {% if current_user.role == 'admin' %}
+    <p class="muted">Администратор модерирует отзывы, но не оставляет их.</p>
+  {% else %}
+  <form method="post" action="{{ url_for('reviews.film_page', film_id=film.id) }}#form" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <p class="muted small">Оцените фильм по каждому критерию от 1 (плохо) до 10 (отлично).</p>
+    {% for field, label in criteria %}{{ score_pills(field, label, values.get(field)|int if values.get(field) else None) }}{% endfor %}
+    <p class="overall">Итоговая оценка: <b id="overall">—</b></p>
+    <label class="field">Текст отзыва
+      <textarea name="text" rows="5" maxlength="{{ max_text }}" minlength="{{ min_text }}" required placeholder="Что понравилось, а что нет? (не короче {{ min_text }} символов)">{{ values.get('text', '') }}</textarea>
+      <small class="muted counter"><span id="count">0</span> / {{ max_text }}</small>
+    </label>
+    <div class="row-actions">
+      <button class="btn btn-primary" type="submit">{{ 'Сохранить изменения' if mine else 'Отправить отзыв' }}</button>
+    </div>
+  </form>
+  {% if mine %}
+  <form method="post" action="{{ url_for('reviews.delete', film_id=film.id) }}" onsubmit="return confirm('Удалить ваш отзыв?')" class="delete-form">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button class="btn btn-ghost btn-sm btn-danger" type="submit">Удалить отзыв</button>
+  </form>
+  {% endif %}
+  {% endif %}
+</section>
+
+{% if others %}
+<section class="card">
+  <h2>Отзывы зрителей</h2>
+  {% for r in others %}
+  <article class="review">
+    <div class="review-head"><b>{{ r.author_name }}</b><span class="muted small">{{ r.updated_at|dt }}</span><span class="score-badge">{{ r.overall_score }}</span></div>
+    <p class="muted small">Сюжет {{ r.plot_score }} · Актёры {{ r.acting_score }} · Музыка и визуал {{ r.visual_score }}</p>
+    <p>{{ r.text }}</p>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+<script>
+(function () {
+  var form = document.querySelector('#form form');
+  if (!form) return;
+  var names = ['plot_score', 'acting_score', 'visual_score'];
+  var out = document.getElementById('overall');
+  function update() {
+    var vals = names.map(function (n) { var c = form.querySelector('input[name=' + n + ']:checked'); return c ? +c.value : null; });
+    out.textContent = vals.indexOf(null) === -1 ? (vals.reduce(function (a, b) { return a + b; }, 0) / 3).toFixed(1) : '—';
+  }
+  form.addEventListener('change', update); update();
+  var ta = form.querySelector('textarea'), cnt = document.getElementById('count');
+  function count() { cnt.textContent = ta.value.length; }
+  ta.addEventListener('input', count); count();
+})();
+</script>
+{% endblock %}

@@ -199,6 +199,11 @@ def profile():
     )
 
 
+# Подбор фильмов, отзывы и админка (ФТ-1.2, ФТ-1.3, ФТ-1.6)
+from features import register_features
+register_features(app)
+
+
 if __name__ == "__main__":
     if init_user_storage():
         app.run(debug=True)
