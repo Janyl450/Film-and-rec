@@ -12,7 +12,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 
 from database import connect_to_database
-from author_applications import is_confirmed_author
+from rating import ratings_for
 
 films_bp = Blueprint("films", __name__)
 
@@ -299,7 +299,7 @@ def file_too_large(_):
 
 # ---------- права доступа ----------
 def author_required(view):
-    """Пускает только вошедшего автора с подтверждённым профилем (п. 4.4.1 ТЗ)."""
+    """Пускает только вошедшего пользователя с ролью «автор»."""
     @wraps(view)
     def wrapper(*args, **kwargs):
         user = session.get("user")
@@ -310,10 +310,6 @@ def author_required(view):
             flash("Добавлять и изменять фильмы могут только авторы. "
                   "Зарегистрируйтесь с ролью «Автор».", "error")
             return redirect(url_for("login"))
-        if not is_confirmed_author(user["id"]):
-            flash("Добавлять фильмы можно после подтверждения профиля администратором. "
-                  "Отправьте заявку на странице «Статус автора».", "error")
-            return redirect(url_for("author_application.apply"))
         return view(*args, **kwargs)
     return wrapper
 
@@ -383,6 +379,9 @@ def my_films():
     for film in films:
         film["genre_list"] = _split_genres(film["genres"])
         film["meta"] = _film_meta(film)
+    ratings = ratings_for([film["id"] for film in films])  # ФТ-2.3
+    for film in films:
+        film["rating"] = ratings[film["id"]]
     return render_template("films/my_films.html", films=films)
 
 
@@ -394,6 +393,7 @@ def view_film(film_id):
         return redirect_response
     film["genre_list"] = _split_genres(film["genres"])
     film["meta"] = _film_meta(film)
+    film["rating"] = ratings_for([film_id])[film_id]  # ФТ-2.3
     video_url = None
     if film_has_video(film_id):
         video_url = url_for("static", filename=f"videos/{film_id}.mp4")
