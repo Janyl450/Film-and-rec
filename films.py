@@ -12,6 +12,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 
 from database import connect_to_database
+from author_applications import is_confirmed_author
 
 films_bp = Blueprint("films", __name__)
 
@@ -298,7 +299,7 @@ def file_too_large(_):
 
 # ---------- права доступа ----------
 def author_required(view):
-    """Пускает только вошедшего пользователя с ролью «автор»."""
+    """Пускает только вошедшего автора с подтверждённым профилем (п. 4.4.1 ТЗ)."""
     @wraps(view)
     def wrapper(*args, **kwargs):
         user = session.get("user")
@@ -309,6 +310,10 @@ def author_required(view):
             flash("Добавлять и изменять фильмы могут только авторы. "
                   "Зарегистрируйтесь с ролью «Автор».", "error")
             return redirect(url_for("login"))
+        if not is_confirmed_author(user["id"]):
+            flash("Добавлять фильмы можно после подтверждения профиля администратором. "
+                  "Отправьте заявку на странице «Статус автора».", "error")
+            return redirect(url_for("author_application.apply"))
         return view(*args, **kwargs)
     return wrapper
 
