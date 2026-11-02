@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_film_macros.html" import poster, genre_tags %}
+{% block title %}Отзывы · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Отзывы на фильмы</h1>
+  <p class="muted">Выберите фильм, чтобы прочитать отзывы и оставить свою оценку.</p>
+</div>
+<form class="searchbar" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Поиск по названию" aria-label="Поиск по названию">
+  <button class="btn btn-primary" type="submit">Найти</button>
+</form>
+{% if not films %}
+  <div class="card empty"><h2>{{ 'Ничего не найдено' if q else 'В каталоге пока нет фильмов' }}</h2>
+    <p class="muted">{{ 'Проверьте название и попробуйте ещё раз.' if q else 'Фильмы добавляют авторы.' }}</p></div>
+{% else %}
+  <div class="list">
+    {% for f in films %}
+    <article class="row-card">
+      {{ poster(f) }}
+      <div class="row-main">
+        <div class="row-title"><h3>{{ f.title }}</h3>
+          {% if f.my_score %}<div class="match match-mine" title="Ваша оценка"><b>{{ f.my_score }}</b><small>ваша оценка</small></div>{% endif %}
+        </div>
+        <p class="muted meta">{{ f.meta }} · отзывов: {{ f.reviews_count }}</p>
+        {{ genre_tags(f) }}
+        <div class="row-actions"><a class="btn btn-primary btn-sm" href="{{ url_for('reviews.film_page', film_id=f.id) }}">{{ 'Изменить отзыв' if f.my_score else 'Оставить отзыв' }}</a></div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

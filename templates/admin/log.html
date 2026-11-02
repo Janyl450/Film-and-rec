@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Журнал · Админка{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Админка</h1></div>
+{% include "admin/_tabs.html" %}
+<div class="card table-wrap">
+  <table class="table">
+    <thead><tr><th>Когда</th><th>Администратор</th><th>Действие</th><th>Кого касается</th><th>Комментарий</th></tr></thead>
+    <tbody>
+    {% for l in items %}
+      <tr>
+        <td class="small">{{ l.created_at|dt }}</td>
+        <td class="small">{{ l.admin_email or '—' }}</td>
+        <td>{{ {'application_approved': 'Заявка одобрена', 'application_rejected': 'Заявка отклонена', 'user_blocked': 'Пользователь заблокирован', 'user_unblocked': 'Пользователь разблокирован'}.get(l.action, l.action) }}</td>
+        <td class="small">{{ l.target or '—' }}</td>
+        <td class="small">{{ l.details or '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">Пока нет записей.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

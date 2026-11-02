@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_film_macros.html" import poster, genre_tags %}
+{% block title %}Рекомендации · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Рекомендации для вас</h1>
+  {% if mode == 'personal' %}
+    <p class="muted">Подобрано по вашим предпочтениям: чем выше процент, тем лучше фильм подходит.</p>
+  {% endif %}
+</div>
+
+{% if mode == 'personal' %}
+  <div class="card prefs-summary">
+    {% if prefs.favorite %}<div><span class="muted">Любимые жанры:</span> {% for g in prefs.favorite %}<span class="tag tag-ok">{{ g }}</span>{% endfor %}</div>{% endif %}
+    {% if prefs.disliked %}<div><span class="muted">Исключены:</span> {% for g in prefs.disliked %}<span class="tag tag-bad">{{ g }}</span>{% endfor %}</div>{% endif %}
+    {% if prefs.has_years %}<div><span class="muted">Годы выпуска:</span> <span class="tag">{{ prefs.year_text() }}</span></div>{% endif %}
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('profile') }}#prefs">Изменить предпочтения</a>
+  </div>
+{% else %}
+  <div class="card notice">
+    <h2>Укажите свои предпочтения</h2>
+    <p class="muted">Чтобы получить персональный подбор с процентом совпадения, выберите любимые жанры или годы выпуска. Пока показываем новинки каталога.</p>
+    <a class="btn btn-primary" href="{{ url_for('profile') }}#prefs">Настроить предпочтения</a>
+  </div>
+{% endif %}
+
+{% if not items %}
+  <div class="card empty">
+    {% if films_total == 0 %}
+      <h2>В каталоге пока нет фильмов</h2>
+      <p class="muted">Как только авторы добавят фильмы, здесь появятся рекомендации.</p>
+    {% else %}
+      <h2>Подходящих фильмов не нашлось</h2>
+      <p class="muted">Попробуйте расширить диапазон лет, добавить жанры или убрать часть нежелательных.</p>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="list">
+    {% for f in items %}
+    <article class="row-card">
+      {{ poster(f) }}
+      <div class="row-main">
+        <div class="row-title">
+          <h3>{{ f.title }}</h3>
+          {% if f.match %}<div class="match" title="Процент совпадения с вашими предпочтениями"><b>{{ f.match.percent }}%</b><small>совпадение</small></div>{% endif %}
+        </div>
+        <p class="muted meta">{{ f.meta }}</p>
+        {{ genre_tags(f) }}
+        {% if f.match %}
+          <div class="meter"><span style="width: {{ f.match.percent }}%"></span></div>
+          <ul class="reasons">
+            {% for r in f.match.reasons %}<li>{{ r }}</li>{% endfor %}
+          </ul>
+          {% if f.match.parts|length > 1 %}
+          <div class="parts">
+            {% for p in f.match.parts %}
+              <div class="part"><span>{{ p.name }}</span><div class="meter meter-sm"><span style="width: {{ p.percent }}%"></span></div><b>{{ p.percent }}%</b></div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endif %}
+        <div class="row-actions">
+          <a class="btn btn-primary btn-sm" href="{{ url_for('reviews.film_page', film_id=f.id) }}">Отзывы и оценка</a>
+          <form method="post" action="{{ url_for('recommendations.hide', film_id=f.id) }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button class="btn btn-ghost btn-sm" type="submit">Не интересно</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <div class="list-foot">
+    {% if total > limit %}
+      <a class="btn btn-ghost" href="{{ url_for('recommendations.index', limit=limit + page) }}">Показать ещё</a>
+    {% endif %}
+    <p class="muted small">Показано {{ items|length }} из {{ total }}. Подбор занял {{ elapsed_ms }} мс.
+      {% if hidden_count %}<a href="{{ url_for('recommendations.hidden') }}">Скрытые фильмы ({{ hidden_count }})</a>{% endif %}</p>
+  </div>
+{% endif %}
+{% if not items and hidden_count %}<p class="muted small"><a href="{{ url_for('recommendations.hidden') }}">Скрытые фильмы ({{ hidden_count }})</a></p>{% endif %}
+{% endblock %}

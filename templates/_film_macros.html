@@ -1,0 +1,21 @@
+{% macro poster(f, cls="") %}
+<div class="poster {{ cls }}" style="--hue: {{ f.hue }}">
+  <span class="poster-letter">{{ f.title[0]|upper }}</span>
+  {% if f.poster_url %}<img src="{{ f.poster_url }}" alt="Постер: {{ f.title }}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}
+</div>
+{% endmacro %}
+
+{% macro genre_tags(f) %}
+{% if f.genre_list %}<div class="tags">{% for g in f.genre_list %}<span class="tag">{{ g }}</span>{% endfor %}</div>{% endif %}
+{% endmacro %}
+
+{% macro score_pills(name, label, value) %}
+<fieldset class="field score-field">
+  <legend>{{ label }}</legend>
+  <div class="pills">
+    {% for n in range(1, 11) %}
+      <label class="pill"><input type="radio" name="{{ name }}" value="{{ n }}" {{ 'checked' if value == n }} required><span>{{ n }}</span></label>
+    {% endfor %}
+  </div>
+</fieldset>
+{% endmacro %}

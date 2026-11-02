@@ -1,0 +1,5 @@
+<nav class="tabs" aria-label="Разделы админки">
+  <a href="{{ url_for('admin.applications') }}" class="{{ 'active' if request.endpoint == 'admin.applications' }}">Заявки авторов</a>
+  <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">Пользователи</a>
+  <a href="{{ url_for('admin.log') }}" class="{{ 'active' if request.endpoint == 'admin.log' }}">Журнал действий</a>
+</nav>

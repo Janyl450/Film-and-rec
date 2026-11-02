@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}КиноРекоменд{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='features.css') }}"> {# KINO-FEATURES #}
 </head>
 <body>
   <header class="topbar">
@@ -31,6 +32,14 @@
       </nav>
     </div>
   </header>
+{# KINO-FEATURES: вторая строка меню #}
+{% if current_user %}
+<div class="subnav"><div class="wrap subnav-in">
+  <a href="{{ url_for('recommendations.index') }}" class="{{ 'active' if request.blueprint == 'recommendations' }}">Рекомендации</a>
+  <a href="{{ url_for('reviews.index') }}" class="{{ 'active' if request.blueprint == 'reviews' }}">Отзывы</a>
+  {% if current_user.role == 'admin' %}<a href="{{ url_for('admin.applications') }}" class="{{ 'active' if request.blueprint == 'admin' }}">Админка</a>{% endif %}
+</div></div>
+{% endif %}
 
   <main class="wrap">
     {% with messages = get_flashed_messages(with_categories=true) %}

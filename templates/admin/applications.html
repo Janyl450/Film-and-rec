@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Заявки авторов · Админка{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Админка</h1></div>
+{% include "admin/_tabs.html" %}
+<div class="filters">
+  {% for key, title in titles.items() %}
+    <a class="chip-link {{ 'active' if key == status }}" href="{{ url_for('admin.applications', status=key) }}">{{ title }} <b>{{ counts.get(key, 0) }}</b></a>
+  {% endfor %}
+</div>
+
+{% if not items %}
+  <div class="card empty"><h2>Заявок нет</h2><p class="muted">В этом разделе пока ничего нет.</p></div>
+{% endif %}
+
+{% for a in items %}
+<article class="card app">
+  <div class="app-head">
+    <div>
+      <h3>{{ a.name or 'Без имени' }}</h3>
+      <p class="muted small">{{ a.email }} · подана {{ a.created_at|dt }}</p>
+    </div>
+    <span class="tag {{ {'pending': 'tag-warn', 'approved': 'tag-ok', 'rejected': 'tag-bad'}[a.status] }}">
+      {{ {'pending': 'Ожидает проверки', 'approved': 'Одобрена', 'rejected': 'Отклонена'}[a.status] }}</span>
+  </div>
+  <dl class="facts">
+    <dt>О себе</dt><dd>{{ a.about or '—' }}</dd>
+    <dt>Портфолио</dt>
+    <dd>{% if a.portfolio %}<a href="{{ a.portfolio }}" target="_blank" rel="noopener noreferrer">{{ a.portfolio }}</a>
+        {% elif a.portfolio_url %}{{ a.portfolio_url }} <span class="tag tag-warn">не ссылка</span>{% else %}—{% endif %}</dd>
+    {% if a.status != 'pending' %}
+      <dt>Решение</dt><dd>{{ a.reviewed_at|dt }}{% if a.reviewer_email %} · {{ a.reviewer_email }}{% endif %}{% if a.comment %}<br>{{ a.comment }}{% endif %}</dd>
+    {% endif %}
+  </dl>
+  {% if a.status == 'pending' %}
+  <div class="app-actions">
+    <form method="post" action="{{ url_for('admin.decide', app_id=a.id) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}"><input type="hidden" name="back" value="{{ status }}">
+      <input type="hidden" name="action" value="approve">
+      <button class="btn btn-primary" type="submit">Одобрить</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.decide', app_id=a.id) }}" class="reject-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}"><input type="hidden" name="back" value="{{ status }}">
+      <input type="hidden" name="action" value="reject">
+      <input type="text" name="comment" required minlength="{{ min_reason }}" maxlength="500" placeholder="Причина отказа (увидит пользователь)" aria-label="Причина отказа">
+      <button class="btn btn-ghost btn-danger" type="submit">Отклонить</button>
+    </form>
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+{% endblock %}
