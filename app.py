@@ -13,6 +13,7 @@ from flask import (Flask, abort, flash, redirect, render_template, request,
 from models import AuthAndPreferencesModule as Auth, init_user_storage
 from films import films_bp
 from catalog import catalog_bp
+from author_applications import author_app_bp
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-change-me")
 app.register_blueprint(films_bp)
 app.register_blueprint(catalog_bp)
+app.register_blueprint(author_app_bp)
 
 GENRES = [
     "Драма", "Комедия", "Триллер", "Боевик", "Фантастика", "Фэнтези",
