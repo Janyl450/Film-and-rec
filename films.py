@@ -13,6 +13,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
 
 from database import connect_to_database
 from author_applications import is_confirmed_author
+from rating import ratings_for
 
 films_bp = Blueprint("films", __name__)
 
@@ -383,6 +384,9 @@ def my_films():
     for film in films:
         film["genre_list"] = _split_genres(film["genres"])
         film["meta"] = _film_meta(film)
+    ratings = ratings_for([film["id"] for film in films])  # ФТ-2.3
+    for film in films:
+        film["rating"] = ratings[film["id"]]
     return render_template("films/my_films.html", films=films)
 
 
@@ -394,6 +398,7 @@ def view_film(film_id):
         return redirect_response
     film["genre_list"] = _split_genres(film["genres"])
     film["meta"] = _film_meta(film)
+    film["rating"] = ratings_for([film_id])[film_id]  # ФТ-2.3
     video_url = None
     if film_has_video(film_id):
         video_url = url_for("static", filename=f"videos/{film_id}.mp4")
