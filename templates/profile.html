@@ -9,6 +9,19 @@
   </div>
 </div>
 
+{# Блок для подачи заявки в авторы (если пользователь — зритель) #}
+{% if p.role == 'viewer' %}
+<section class="card" style="margin-bottom: 24px; background: rgba(var(--primary-rgb, 99, 102, 241), 0.03); border: 1px dashed var(--border-color, #cbd5e1);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <div>
+      <h3 style="margin-bottom: 5px;">Стать автором рецензий</h3>
+      <p class="muted" style="margin: 0;">Хотите писать экспертные статьи и рецензии? Подайте заявку администратору.</p>
+    </div>
+    <a href="{{ url_for('apply_author') }}" class="btn btn-secondary">Подать заявку</a>
+  </div>
+</section>
+{% endif %}
+
 <div class="grid">
   <section class="card" id="info">
     <h2>Личные данные</h2>
