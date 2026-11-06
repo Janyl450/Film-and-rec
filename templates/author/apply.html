@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Статус автора · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Статус автора</h1>
+  <p class="muted">Добавлять фильмы в каталог могут авторы с подтверждённым профилем. Отправьте заявку: администратор посмотрит ваш блог или портфолио и примет решение.</p>
+</div>
+
+{% if latest %}
+<section class="card">
+  <h2>Ваша заявка
+    {% if latest.status == 'approved' %}<span class="tag tag-ok">{{ titles[latest.status] }}</span>
+    {% elif latest.status == 'rejected' %}<span class="tag tag-bad">{{ titles[latest.status] }}</span>
+    {% else %}<span class="tag tag-warn">{{ titles.get(latest.status, latest.status) }}</span>{% endif %}
+  </h2>
+
+  <dl class="facts">
+    <dt>Отправлена</dt><dd>{{ latest.created_at|dt }}</dd>
+    <dt>Портфолио</dt>
+    <dd>{% if latest.portfolio %}<a href="{{ latest.portfolio }}" target="_blank" rel="noopener noreferrer">{{ latest.portfolio }}</a>{% else %}{{ latest.portfolio_url }}{% endif %}</dd>
+    <dt>О себе</dt><dd>{{ latest.about }}</dd>
+    {% if latest.reviewed_at %}<dt>Решение</dt><dd>{{ latest.reviewed_at|dt }}</dd>{% endif %}
+    {% if latest.status == 'rejected' and latest.comment %}<dt>Причина отказа</dt><dd>{{ latest.comment }}</dd>{% endif %}
+  </dl>
+
+  {% if latest.status == 'pending' %}
+    <p class="muted">Заявка на проверке. Это страница обновится, когда администратор примет решение.</p>
+  {% elif latest.status == 'approved' %}
+    <p>Ваш профиль подтверждён. Теперь вы можете добавлять и изменять карточки фильмов.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{{ url_for('films.add_film') }}">Добавить фильм</a>
+      <a class="btn btn-ghost" href="{{ url_for('films.my_films') }}">Мои фильмы</a>
+    </div>
+  {% elif latest.status == 'rejected' %}
+    <p class="muted">Вы можете исправить данные и отправить заявку ещё раз.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if show_form %}
+<section class="card">
+  <h2>{{ 'Новая заявка' if latest else 'Подать заявку' }}</h2>
+  <form method="post" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <label class="field">Ссылка на блог или портфолио *
+      <input type="url" name="portfolio_url" value="{{ values.get('portfolio_url', '') }}" required maxlength="500" placeholder="https://...">
+    </label>
+    <label class="field">О себе *
+      <textarea name="about" rows="6" required minlength="{{ min_about }}" maxlength="{{ max_about }}" placeholder="О чём вы пишете, какое кино вам близко, сколько времени этим занимаетесь">{{ values.get('about', '') }}</textarea>
+    </label>
+    <button class="btn btn-primary" type="submit">Отправить заявку</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

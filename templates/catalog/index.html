@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_film_macros.html" import poster, genre_tags %}
+{% block title %}Каталог · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Каталог фильмов</h1>
+  <p class="muted">Ищите по названию или актёрам и фильтруйте по жанрам, годам и странам.</p>
+  {% if not current_user %}
+    <p class="muted small">Чтобы открыть страницу фильма и оставить отзыв, <a href="{{ url_for('login') }}">войдите в аккаунт</a>.</p>
+  {% endif %}
+</div>
+
+<form method="get" action="{{ url_for('catalog.index') }}" class="card">
+  <label class="field">Поиск
+    <input type="text" name="q" value="{{ form.q }}" maxlength="100" placeholder="Название фильма или имя актёра">
+  </label>
+
+  <fieldset class="chips-group">
+    <legend>Жанры (подойдёт фильм хотя бы с одним из выбранных)</legend>
+    <div class="chips chips-like">
+      {% for g in genres %}
+        <label class="chip"><input type="checkbox" name="genre" value="{{ g }}" {{ 'checked' if g in form.genre }}><span>{{ g }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="row">
+    <label class="field">Год выпуска: от
+      <input type="number" name="year_from" min="1888" max="2100" value="{{ form.year_from }}" placeholder="1990">
+    </label>
+    <label class="field">до
+      <input type="number" name="year_to" min="1888" max="2100" value="{{ form.year_to }}" placeholder="2025">
+    </label>
+    <label class="field">Страна
+      <select name="country">
+        <option value="">Все страны</option>
+        {% for c in countries %}
+          <option value="{{ c }}" {{ 'selected' if c == form.country }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <label class="field">Порядок
+    <select name="sort">
+      {% for key, option in sorts.items() %}
+        <option value="{{ key }}" {{ 'selected' if key == form.sort }}>{{ option[0] }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <div class="hero-actions">
+    <button class="btn btn-primary" type="submit">Найти</button>
+    {% if filtered %}<a class="btn btn-ghost" href="{{ url_for('catalog.index') }}">Сбросить</a>{% endif %}
+  </div>
+</form>
+
+{% if items %}
+  <p class="muted">Найдено фильмов: {{ total }}</p>
+  <div class="list">
+    {% for f in items %}
+    <article class="row-card">
+      {{ poster(f) }}
+      <div class="row-main">
+        <div class="row-title">
+          <h3><a href="{{ url_for('reviews.film_page', film_id=f.id) }}">{{ f.title }}</a></h3>
+          <div class="match">
+            {% if f.rating_info and f.rating_info.rating %}
+              <b>★ {{ '%.1f'|format(f.rating_info.rating) }}</b><small>рейтинг</small>
+            {% else %}
+              <b>—</b><small>нет оценок</small>
+            {% endif %}
+          </div>
+        </div>
+        {% if f.meta %}<p class="muted meta">{{ f.meta }}</p>{% endif %}
+        {{ genre_tags(f) }}
+        <div class="row-actions">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('reviews.film_page', film_id=f.id) }}">Открыть фильм</a>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  {% if pages > 1 %}
+  <div class="list-foot">
+    {% if page > 1 %}
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('catalog.index', page=page - 1, **args) }}">← Назад</a>
+    {% endif %}
+    <p class="muted">Страница {{ page }} из {{ pages }}</p>
+    {% if page < pages %}
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('catalog.index', page=page + 1, **args) }}">Дальше →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+{% else %}
+  <section class="card empty">
+    <h2>Ничего не найдено</h2>
+    {% if filtered %}
+      <p class="muted">Попробуйте изменить слова поиска или убрать часть фильтров.</p>
+      <a class="btn btn-primary" href="{{ url_for('catalog.index') }}">Сбросить фильтры</a>
+    {% else %}
+      <p class="muted">В каталоге пока нет фильмов. Авторы скоро их добавят.</p>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}

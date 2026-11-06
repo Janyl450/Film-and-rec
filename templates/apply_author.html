@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Заявка на получение роли автора{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto; padding: 30px;">
+  <h2>Подать заявку на статус автора</h2>
+  
+  {% if existing_app %}
+    <div class="alert {% if existing_app.status == 'pending' %}alert-warn{% elif existing_app.status == 'approved' %}alert-success{% else %}alert-danger{% endif %}" style="margin-bottom: 20px; padding: 15px; border-radius: 8px;">
+      <p><strong>Статус вашей текущей заявки:</strong> 
+        {% if existing_app.status == 'pending' %}Ожидает проверки администратором.
+        {% elif existing_app.status == 'approved' %}Одобрена! Вы теперь автор.
+        {% else %}Отклонена.{% endif %}
+      </p>
+      {% if existing_app.comment %}
+        <p><strong>Комментарий администратора:</strong> {{ existing_app.comment }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <p class="muted">Заполните форму ниже, чтобы администратор рассмотрел вашу кандидатуру и открыл доступ автора.</p>
+
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    
+    <div style="margin-bottom: 15px;">
+      <label for="portfolio_url"><strong>Ссылка на портфолио или профиль</strong></label>
+      <input type="url" name="portfolio_url" id="portfolio_url" placeholder="https://example.com/my-reviews" style="width: 100%; padding: 8px; margin-top: 5px;">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label for="about"><strong>О себе / Опыт написания рецензий</strong> <span style="color: red;">*</span></label>
+      <textarea name="about" id="about" rows="5" required placeholder="Расскажите, почему вам интересна роль автора..." style="width: 100%; padding: 8px; margin-top: 5px;"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Отправить заявку</button>
+    <a href="{{ url_for('profile') }}" class="btn btn-ghost" style="margin-left: 10px;">Назад в профиль</a>
+  </form>
+</div>
+{% endblock %}
