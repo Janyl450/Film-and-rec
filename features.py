@@ -15,12 +15,14 @@ _tables_ready = False
 
 def register_features(app):
     from admin import admin_bp
+    from expert import expert_bp
     from recommend import rec_bp
     from reviews import reviews_bp
 
     app.register_blueprint(rec_bp)
     app.register_blueprint(reviews_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(expert_bp)
     app.add_template_filter(fmt_dt, "dt")
 
     @app.before_request

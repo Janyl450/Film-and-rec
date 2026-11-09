@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Рецензии авторов · Админка{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Админка</h1></div>
+{% include "admin/_tabs.html" %}
+<div class="filters">
+  {% for key, title in filters.items() %}
+    <a class="chip-link {{ 'active' if key == status }}" href="{{ url_for('expert.admin_list', status=key) }}">{{ title }} <b>{{ counts.get(key, 0) }}</b></a>
+  {% endfor %}
+</div>
+
+{% if not items %}
+  <div class="card empty"><h2>Рецензий нет</h2><p class="muted">В этом разделе пока ничего нет.</p></div>
+{% endif %}
+
+{% for e in items %}
+<article class="card app">
+  <div class="app-head">
+    <div>
+      <h3>{{ e.title }}</h3>
+      <p class="muted small">Фильм: {{ e.film_title }} · автор {{ e.name or 'Без имени' }} ({{ e.email }}) · {{ e.updated_at|dt }}</p>
+    </div>
+    <span class="tag {{ {'pending': 'tag-warn', 'approved': 'tag-ok', 'rejected': 'tag-bad'}[e.status] }}">{{ titles[e.status] }}</span>
+  </div>
+  <p>{{ e.text }}</p>
+  {% if e.status == 'rejected' and e.comment %}<p class="muted"><b>Причина отказа:</b> {{ e.comment }}</p>{% endif %}
+  {% if e.status == 'pending' %}
+  <div class="app-actions">
+    <form method="post" action="{{ url_for('expert.admin_decide', expert_id=e.id) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}"><input type="hidden" name="back" value="{{ status }}">
+      <input type="hidden" name="action" value="approve">
+      <button class="btn btn-primary" type="submit">Одобрить</button>
+    </form>
+    <form method="post" action="{{ url_for('expert.admin_decide', expert_id=e.id) }}" class="reject-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}"><input type="hidden" name="back" value="{{ status }}">
+      <input type="hidden" name="action" value="reject">
+      <input type="text" name="comment" required minlength="{{ min_reason }}" maxlength="500" placeholder="Причина отказа (увидит автор)" aria-label="Причина отказа">
+      <button class="btn btn-ghost btn-danger" type="submit">Отклонить</button>
+    </form>
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+{% endblock %}

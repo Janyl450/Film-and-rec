@@ -62,6 +62,24 @@
   {% endif %}
 </section>
 
+{% if experts or current_user.role == 'author' %}
+<section class="card">
+  <h2>Рецензии авторов</h2>
+  {% for e in experts %}
+  <article class="review">
+    <div class="review-head"><b>{{ e.title }}</b><span class="tag tag-ok">Рецензия автора</span></div>
+    <p class="muted small">{{ e.name or e.email.split('@')[0] }} · {{ e.updated_at|dt }}</p>
+    <p>{{ e.text }}</p>
+  </article>
+  {% else %}
+  <p class="muted">Пока нет рецензий авторов.</p>
+  {% endfor %}
+  {% if current_user.role == 'author' %}
+    <a class="btn btn-ghost" href="{{ url_for('expert.write', film_id=film.id) }}">Написать рецензию автора</a>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if others %}
 <section class="card">
   <h2>Отзывы зрителей</h2>

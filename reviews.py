@@ -56,11 +56,15 @@ def _render_film_page(film_id, form=None, status=200):
                     "WHERE r.film_id = %s AND r.status = 'approved' AND r.user_id <> %s "
                     "ORDER BY r.updated_at DESC LIMIT 50;", (film_id, user["id"]))
         others = cur.fetchall()
+        cur.execute("SELECT e.id, e.title, e.text, e.updated_at, u.name, u.email FROM expert_reviews e "
+                    "JOIN users u ON u.id = e.author_id WHERE e.film_id = %s AND e.status = 'approved' "
+                    "ORDER BY e.updated_at DESC LIMIT 20;", (film_id,))
+        experts = cur.fetchall()
     for r in others:
         r["author_name"] = r["name"] or r["email"].split("@")[0]
     values = form if form is not None else (mine or {})
     return render_template("reviews/film.html", film=film, agg=agg, mine=mine, others=others,
-                           values=values, criteria=CRITERIA, min_text=MIN_TEXT,
+                           values=values, experts=experts, criteria=CRITERIA, min_text=MIN_TEXT,
                            max_text=MAX_TEXT, status_titles=STATUS_TITLES,
                            video_url=video_url_for(film_id)), status
 

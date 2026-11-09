@@ -49,6 +49,21 @@ CREATE TABLE IF NOT EXISTS reviews (
     UNIQUE (film_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS expert_reviews (
+    id SERIAL PRIMARY KEY,
+    film_id INTEGER NOT NULL REFERENCES films(id) ON DELETE CASCADE,
+    author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
+    text TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    comment TEXT,
+    reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at TIMESTAMP,
+    UNIQUE (film_id, author_id)
+);
+
 CREATE TABLE IF NOT EXISTS hidden_films (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     film_id INTEGER NOT NULL REFERENCES films(id) ON DELETE CASCADE,

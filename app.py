@@ -202,6 +202,40 @@ def profile():
         disliked=split_genres(data["disliked_genres"]),
     )
 
+@app.route("/apply-author", methods=["GET", "POST"])
+@login_required
+def apply_author():
+    user_id = session["user"]["id"]
+    
+    # Проверяем, не подавал ли пользователь заявку ранее
+    with db_cursor() as cur:
+        cur.execute("SELECT status, comment FROM author_applications WHERE user_id = %s ORDER BY id DESC LIMIT 1;", (user_id,))
+        existing_app = cur.fetchone()
+        
+        # Если пользователь уже автор, ему подавать заявку не нужно
+        if session["user"].get("role") == "author" or session["user"].get("role") == "admin":
+            flash("У вас уже есть расширенные права.", "info")
+            return redirect(url_for("profile"))
+
+    if request.method == "POST":
+        portfolio_url = request.form.get("portfolio_url", "").strip()
+        about = request.form.get("about", "").strip()
+        
+        if len(about) < 10:
+            flash("Расскажите немного о себе (не менее 10 символов).", "error")
+        else:
+            with db_cursor(commit=True) as cur:
+                # Если заявка уже была и её отклонили, можно разрешить отправить повторно или обновить
+                cur.execute(
+                    "INSERT INTO author_applications (user_id, portfolio_url, about, status) "
+                    "VALUES (%s, %s, %s, 'pending') "
+                    "ON CONFLICT DO NOTHING;", # Либо сохраняем новую
+                    (user_id, portfolio_url or None, about)
+                )
+            flash("Ваша заявка успешно отправлена администратору!", "success")
+            return redirect(url_for("profile"))
+
+    return render_template("apply_author.html", existing_app=existing_app)
 
 # Подбор фильмов, отзывы и админка (ФТ-1.2, ФТ-1.3, ФТ-1.6)
 from features import register_features

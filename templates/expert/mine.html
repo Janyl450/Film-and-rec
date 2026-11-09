@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Мои рецензии · КиноРекоменд{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Мои рецензии</h1>
+  <p class="muted">Напишите рецензию на фильм: администратор проверит её, и после одобрения она появится на странице фильма.</p>
+</div>
+
+{% for e in items %}
+<article class="card app">
+  <div class="app-head">
+    <div><h3>{{ e.title }}</h3><p class="muted small">Фильм: {{ e.film_title }} · {{ e.updated_at|dt }}</p></div>
+    <span class="tag {{ {'pending': 'tag-warn', 'approved': 'tag-ok', 'rejected': 'tag-bad'}[e.status] }}">{{ titles[e.status] }}</span>
+  </div>
+  <p>{{ e.text[:300] }}{% if e.text|length > 300 %}…{% endif %}</p>
+  {% if e.status == 'rejected' and e.comment %}<p><b>Причина отказа:</b> {{ e.comment }}</p>{% endif %}
+  <div class="app-actions">
+    <a class="btn btn-ghost" href="{{ url_for('expert.write', film_id=e.film_id) }}">{{ 'Исправить' if e.status == 'rejected' else 'Изменить' }}</a>
+    <form method="post" action="{{ url_for('expert.delete', expert_id=e.id) }}" onsubmit="return confirm('Удалить рецензию?');">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <button class="btn btn-ghost btn-danger" type="submit">Удалить</button>
+    </form>
+  </div>
+</article>
+{% endfor %}
+
+<section class="card">
+  <h2>Выбрать фильм для рецензии</h2>
+  <form method="get" class="searchbar">
+    <input type="search" name="q" value="{{ q }}" placeholder="Название фильма" aria-label="Поиск фильма">
+    <button class="btn btn-ghost" type="submit">Найти</button>
+  </form>
+  {% if not films %}<p class="muted">Фильмы не найдены.</p>{% endif %}
+  <ul class="expert-films">
+    {% for f in films %}
+    <li><a href="{{ url_for('expert.write', film_id=f.id) }}">{{ f.title }}{% if f.year %} ({{ f.year }}){% endif %}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

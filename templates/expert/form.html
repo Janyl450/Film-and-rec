@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Рецензия на «{{ film.title }}» · КиноРекоменд{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('expert.mine') }}">← Мои рецензии</a></p>
+<div class="page-head">
+  <h1>Рецензия на «{{ film.title }}»</h1>
+  <p class="muted">{{ film.meta }}{% if film.director %} · реж. {{ film.director }}{% endif %}</p>
+</div>
+
+{% if mine %}
+<section class="card">
+  <h2>Статус <span class="tag {{ {'pending': 'tag-warn', 'approved': 'tag-ok', 'rejected': 'tag-bad'}[mine.status] }}">{{ titles[mine.status] }}</span></h2>
+  {% if mine.status == 'rejected' and mine.comment %}<p><b>Причина отказа:</b> {{ mine.comment }}</p>{% endif %}
+  {% if mine.status == 'approved' %}<p class="muted">Рецензия опубликована. Если вы измените её, она снова уйдёт на проверку.</p>{% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <form method="post" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <label class="field">Заголовок *
+      <input type="text" name="title" value="{{ values.get('title', '') }}" required minlength="{{ min_title }}" maxlength="{{ max_title }}" placeholder="Например: Фильм, который заставляет думать">
+    </label>
+    <label class="field">Текст рецензии * (от {{ min_text }} до {{ max_text }} символов)
+      <textarea name="text" rows="12" required minlength="{{ min_text }}" maxlength="{{ max_text }}" placeholder="Что удалось, что нет и почему">{{ values.get('text', '') }}</textarea>
+    </label>
+    <button class="btn btn-primary" type="submit">Отправить на проверку</button>
+  </form>
+</section>
+{% endblock %}
